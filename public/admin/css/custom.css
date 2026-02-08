@@ -1,0 +1,60 @@
+/* Dashboard Cards */
+.tale-bg {
+    background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+}
+
+.card-img-holder {
+    position: relative;
+}
+
+.card-img-holder:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
+    background: url('../images/dashboard/circle.svg') no-repeat center;
+}
+
+/* Low Stock List */
+.todo-list {
+    padding-left: 0;
+    list-style: none;
+}
+
+.todo-list li {
+    padding: 15px 0;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.todo-list li:last-child {
+    border-bottom: none;
+}
+
+/* Status badges */
+.badge-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge-processing {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.badge-shipped {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.badge-delivered {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.badge-cancelled {
+    background-color: #dc3545;
+    color: #fff;
+}
