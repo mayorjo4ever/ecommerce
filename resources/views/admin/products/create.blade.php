@@ -224,7 +224,7 @@
                     <div class="card-body">
                         <button type="submit" class="btn btn-primary btn-block btn-lg">
                             <i class="mdi mdi-content-save"></i> Create Product
-                        </button>
+                        </button> <br/>
                         <a href="{{ route('admin.products.index') }}" class="btn btn-light btn-block">
                             Cancel
                         </a>

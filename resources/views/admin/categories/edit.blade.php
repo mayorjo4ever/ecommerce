@@ -151,11 +151,11 @@
                     <div class="card-body">
                         <button type="submit" class="btn btn-primary btn-block btn-lg">
                             <i class="mdi mdi-content-save"></i> Update Category
-                        </button>
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-light btn-block">
+                        </button> <br/> <br/>
+                        <a href="{{ route('admin.categories.index') }}" class="btn btn-light text-dark font-weight-bold btn-block">
                             Cancel
-                        </a>
-                        <button type="button" class="btn btn-danger btn-block" 
+                        </a><br/> <br/>
+                        <button type="button" class="btn btn-danger text-white font-weight-bold btn-block" 
                                 onclick="deleteCategory({{ $category->id }})">
                             <i class="mdi mdi-delete"></i> Delete Category
                         </button>

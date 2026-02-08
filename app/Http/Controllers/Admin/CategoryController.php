@@ -33,20 +33,22 @@ class CategoryController extends Controller
         return view('admin.categories.create', compact('parentCategories'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_active' => 'boolean',
             'order' => 'nullable|integer|min:0',
         ]);
 
         // Generate slug
         $validated['slug'] = Str::slug($validated['name']);
-        
+
+        // Handle checkbox
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
         // Set default order if not provided
         if (!isset($validated['order'])) {
             $maxOrder = Category::where('parent_id', $validated['parent_id'] ?? null)->max('order');
@@ -86,14 +88,13 @@ class CategoryController extends Controller
         return view('admin.categories.edit', compact('category', 'parentCategories'));
     }
 
-    public function update(Request $request, Category $category)
+   public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id',
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_active' => 'boolean',
             'order' => 'nullable|integer|min:0',
         ]);
 
@@ -107,13 +108,16 @@ class CategoryController extends Controller
             return back()->withErrors(['parent_id' => 'A category cannot be its own parent.']);
         }
 
+        // Handle checkbox - if unchecked, it won't be in request
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image
             if ($category->image) {
                 ImageHelper::deleteImage($category->image);
             }
-            
+
             $validated['image'] = ImageHelper::uploadImage(
                 $request->file('image'),
                 'categories',

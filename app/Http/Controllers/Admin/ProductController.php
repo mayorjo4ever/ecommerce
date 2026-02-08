@@ -29,58 +29,60 @@ class ProductController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'nullable|string',
-            'short_description' => 'nullable|string|max:500',
-            'price' => 'required|numeric|min:0',
-            'sale_price' => 'nullable|numeric|min:0|lt:price',
-            'quantity' => 'required|integer|min:0',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'product_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_featured' => 'boolean',
-            'is_active' => 'boolean',
-        ]);
+        {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'sku' => 'required|string|unique:products,sku',
+                'category_id' => 'required|exists:categories,id',
+                'description' => 'nullable|string',
+                'short_description' => 'nullable|string|max:500',
+                'price' => 'required|numeric|min:0',
+                'sale_price' => 'nullable|numeric|min:0|lt:price',
+                'quantity' => 'required|integer|min:0',
+                'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'product_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
 
-        // Generate slug
-        $validated['slug'] = Str::slug($validated['name']);
+            // Generate slug
+            $validated['slug'] = Str::slug($validated['name']);
 
-        // Handle featured image upload
-        if ($request->hasFile('featured_image')) {
-            $validated['featured_image'] = ImageHelper::uploadImage(
-                $request->file('featured_image'),
-                'products',
-                800,
-                800
-            );
-        }
+            // Handle checkboxes
+            $validated['is_featured'] = $request->has('is_featured') ? true : false;
+            $validated['is_active'] = $request->has('is_active') ? true : false;
 
-        // Create product
-        $product = Product::create($validated);
-
-        // Generate QR Code
-        $product->qr_code = QRCodeHelper::generateProductQR($product);
-        $product->save();
-
-        // Handle additional product images
-        if ($request->hasFile('product_images')) {
-            foreach ($request->file('product_images') as $index => $image) {
-                $imagePath = ImageHelper::uploadImage($image, 'products', 800, 800);
-                
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $imagePath,
-                    'order' => $index + 1,
-                ]);
+            // Handle featured image upload
+            if ($request->hasFile('featured_image')) {
+                $validated['featured_image'] = ImageHelper::uploadImage(
+                    $request->file('featured_image'),
+                    'products',
+                    800,
+                    800
+                );
             }
-        }
 
-        return redirect()->route('admin.products.index')
-            ->with('success', 'Product created successfully!');
-    }
+            // Create product
+            $product = Product::create($validated);
+
+            // Generate QR Code
+            $product->qr_code = QRCodeHelper::generateProductQR($product);
+            $product->save();
+
+            // Handle additional product images
+            if ($request->hasFile('product_images')) {
+                foreach ($request->file('product_images') as $index => $image) {
+                    $imagePath = ImageHelper::uploadImage($image, 'products', 800, 800);
+
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $imagePath,
+                        'order' => $index + 1,
+                    ]);
+                }
+            }
+
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Product created successfully!');
+        }
 
     public function show(Product $product)
     {
@@ -108,8 +110,6 @@ class ProductController extends Controller
             'quantity' => 'required|integer|min:0',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'product_images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_featured' => 'boolean',
-            'is_active' => 'boolean',
         ]);
 
         // Update slug if name changed
@@ -117,13 +117,17 @@ class ProductController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
+        // Handle checkboxes - if unchecked, they won't be in request
+        $validated['is_featured'] = $request->has('is_featured') ? true : false;
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
         // Handle featured image upload
         if ($request->hasFile('featured_image')) {
             // Delete old image
             if ($product->featured_image) {
                 ImageHelper::deleteImage($product->featured_image);
             }
-            
+
             $validated['featured_image'] = ImageHelper::uploadImage(
                 $request->file('featured_image'),
                 'products',
@@ -139,7 +143,7 @@ class ProductController extends Controller
         if ($request->hasFile('product_images')) {
             foreach ($request->file('product_images') as $index => $image) {
                 $imagePath = ImageHelper::uploadImage($image, 'products', 800, 800);
-                
+
                 ProductImage::create([
                     'product_id' => $product->id,
                     'image_path' => $imagePath,

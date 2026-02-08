@@ -137,8 +137,8 @@
                     <div class="card-body">
                         <button type="submit" class="btn btn-primary btn-block btn-lg">
                             <i class="mdi mdi-content-save"></i> Create Category
-                        </button>
-                        <a href="{{ route('admin.categories.index') }}" class="btn btn-light btn-block">
+                        </button> <br/><br/>
+                        <a href="{{ route('admin.categories.index') }}" class="btn btn-danger text-white btn-block">
                             Cancel
                         </a>
                     </div>
