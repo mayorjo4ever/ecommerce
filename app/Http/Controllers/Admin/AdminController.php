@@ -38,8 +38,9 @@ class AdminController extends Controller
 
         $admin = Admin::create($validated);
 
-        // Assign roles
-        $admin->syncRoles($request->roles);
+        // Get role objects from IDs and sync
+        $roles = Role::whereIn('id', $request->roles)->get();
+        $admin->syncRoles($roles);
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin created successfully!');
@@ -87,12 +88,14 @@ class AdminController extends Controller
 
         $admin->update($validated);
 
-        // Sync roles
-        $admin->syncRoles($request->roles);
+        // Get role objects from IDs and sync
+        $roles = Role::whereIn('id', $request->roles)->get();
+        $admin->syncRoles($roles);
 
         return redirect()->route('admin.admins.index')
             ->with('success', 'Admin updated successfully!');
     }
+
 
     public function destroy(Admin $admin)
     {

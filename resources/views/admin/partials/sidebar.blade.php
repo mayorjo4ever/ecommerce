@@ -73,11 +73,13 @@
             <div class="collapse" id="admins-menu">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item"> <a class="nav-link" href="{{ route('admin.admins.index') }}">All Admins</a></li>
-                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.roles.index') }}">Roles & Permissions</a></li>
+                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.roles.index') }}">Roles</a></li>
+                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.permissions.index') }}">Permissions</a></li>
                 </ul>
             </div>
         </li>
         @endif
+         
 
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.settings') }}">

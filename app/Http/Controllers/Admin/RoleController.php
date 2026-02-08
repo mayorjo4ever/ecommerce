@@ -28,7 +28,7 @@ class RoleController extends Controller
         return view('admin.roles.create', compact('permissions'));
     }
 
-    public function store(Request $request)
+     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
@@ -41,7 +41,9 @@ class RoleController extends Controller
             'guard_name' => 'admin'
         ]);
 
-        $role->syncPermissions($request->permissions);
+        // Get permission objects from IDs and sync
+        $permissions = Permission::whereIn('id', $request->permissions)->get();
+        $role->syncPermissions($permissions);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role created successfully!');
@@ -68,7 +70,7 @@ class RoleController extends Controller
         return view('admin.roles.edit', compact('role', 'permissions'));
     }
 
-    public function update(Request $request, Role $role)
+   public function update(Request $request, Role $role)
     {
         // Prevent editing Super Admin role
         if ($role->name === 'Super Admin') {
@@ -82,7 +84,10 @@ class RoleController extends Controller
         ]);
 
         $role->update(['name' => $validated['name']]);
-        $role->syncPermissions($request->permissions);
+        
+        // Get permission objects from IDs and sync
+        $permissions = Permission::whereIn('id', $request->permissions)->get();
+        $role->syncPermissions($permissions);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role updated successfully!');

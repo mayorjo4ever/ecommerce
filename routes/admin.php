@@ -64,6 +64,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         // Role Management - accessible to all admins for now
         Route::resource('roles', RoleController::class);
+        
+        // Permission Management
+        Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('permissions.index');
+        Route::post('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('permissions.store');
+        Route::delete('permissions/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('permissions.destroy');
+
     });
 });
 
