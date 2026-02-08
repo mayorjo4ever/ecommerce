@@ -276,6 +276,20 @@
             </div>
         </div>
     </div>
+    
+    <!-- Add this card in the statistics section -->
+    <div class="col-md-6 col-xl-3 grid-margin stretch-card">
+        <div class="card bg-gradient-warning card-img-holder text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="font-weight-normal mb-0">Today's POS Sales</h4>
+                    <i class="mdi mdi-point-of-sale mdi-24px"></i>
+                </div>
+                <h2 class="mb-3">{{ $todayPOSSales ?? 0 }}</h2>
+                <h6 class="card-text">₦{{ number_format($todayPOSRevenue ?? 0, 2) }}</h6>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('custom-scripts')

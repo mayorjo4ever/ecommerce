@@ -8,6 +8,21 @@
         </li>
         
         <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#pos-menu" aria-expanded="false" aria-controls="pos-menu">
+                <i class="icon-basket menu-icon"></i>
+                <span class="menu-title">Point of Sale</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="pos-menu">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.pos.index') }}">New Sale</a></li>
+                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.pos.history') }}">Sales History</a></li>
+                </ul>
+            </div>
+        </li>
+        
+        
+        <li class="nav-item">
             <a class="nav-link" data-toggle="collapse" href="#products-menu" aria-expanded="false" aria-controls="products-menu">
                 <i class="icon-layout menu-icon"></i>
                 <span class="menu-title">Products</span>
@@ -71,11 +86,11 @@
                 <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="admins-menu">
-                <ul class="nav flex-column sub-menu">
-                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.admins.index') }}">All Admins</a></li>
-                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.roles.index') }}">Roles</a></li>
-                    <li class="nav-item"> <a class="nav-link" href="{{ route('admin.permissions.index') }}">Permissions</a></li>
-                </ul>
+                  <ul class="nav flex-column sub-menu">
+                        <li class="nav-item"> <a class="nav-link" href="{{ route('admin.admins.index') }}">All Admins</a></li>
+                        <li class="nav-item"> <a class="nav-link" href="{{ route('admin.roles.index') }}">Roles</a></li>
+                        <li class="nav-item"> <a class="nav-link" href="{{ route('admin.permissions.index') }}">Permissions</a></li>
+                    </ul>
             </div>
         </li>
         @endif

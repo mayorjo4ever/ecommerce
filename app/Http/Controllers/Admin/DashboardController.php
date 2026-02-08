@@ -37,7 +37,17 @@ class DashboardController extends Controller
         $shippedOrders = Order::where('status', 'shipped')->count();
         $deliveredOrders = Order::where('status', 'delivered')->count();
         $cancelledOrders = Order::where('status', 'cancelled')->count();
+        
+         // POS specific stats
+        $todayPOSSales = Order::where('order_number', 'like', 'POS-%')
+            ->whereDate('created_at', today())
+            ->count();
 
+        $todayPOSRevenue = Order::where('order_number', 'like', 'POS-%')
+            ->whereDate('created_at', today())
+            ->sum('total');
+
+       
         return view('admin.dashboard', compact(
             'totalOrders',
             'totalProducts',
@@ -49,7 +59,9 @@ class DashboardController extends Controller
             'processingOrders',
             'shippedOrders',
             'deliveredOrders',
-            'cancelledOrders'
+            'cancelledOrders',
+            'todayPOSSales',
+            'todayPOSRevenue'
         ));
     }
 }

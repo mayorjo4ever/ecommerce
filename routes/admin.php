@@ -1,16 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AuthController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProductController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\CustomerController;
-use App\Http\Controllers\Admin\CouponController;
-use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\POSController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoleController;
+use Illuminate\Support\Facades\Route;
 
 // Frontend Routes
 Route::get('/', function () {
@@ -66,12 +68,28 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('roles', RoleController::class);
         
         // Permission Management
-        Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('permissions.index');
-        Route::post('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('permissions.store');
-        Route::delete('permissions/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('permissions.destroy');
+        // Permission Management
+        Route::resource('permissions', PermissionController::class)->except(['show']);
+        #Route::get('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'index'])->name('permissions.index');
+        #Route::post('permissions', [\App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('permissions.store');
+        #Route::delete('permissions/{permission}', [\App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('permissions.destroy');
 
     });
 });
+
+
+// Point of Sale (POS) - with permission check
+Route::prefix('pos')->name('pos.')->middleware('permission:access pos,admin')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\POSController::class, 'index'])->name('index');
+    Route::get('/search-products', [\App\Http\Controllers\Admin\POSController::class, 'searchProducts'])->name('search.products');
+    Route::get('/product/{id}', [\App\Http\Controllers\Admin\POSController::class, 'getProduct'])->name('get.product');
+    Route::get('/search-customer', [\App\Http\Controllers\Admin\POSController::class, 'searchCustomer'])->name('search.customer');
+    Route::post('/create-customer', [\App\Http\Controllers\Admin\POSController::class, 'createQuickCustomer'])->name('create.customer');
+    Route::post('/process-sale', [\App\Http\Controllers\Admin\POSController::class, 'processSale'])->name('process.sale');
+    Route::get('/receipt/{order}', [\App\Http\Controllers\Admin\POSController::class, 'printReceipt'])->name('receipt');
+    Route::get('/history', [\App\Http\Controllers\Admin\POSController::class, 'salesHistory'])->name('history');
+});
+
 
 /**
 
