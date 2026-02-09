@@ -48,6 +48,28 @@
             object-fit: cover;
             border-radius: 5px;
         }
+        
+        #qr-video {
+            border-radius: 5px;
+        }
+        .scanning-line {
+            position: relative;
+            overflow: hidden;
+        }
+        .scanning-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #4e73df;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(500px); }
+        }
     </style>
 @endpush
 
@@ -73,14 +95,65 @@
     <div class="row pos-container">
         <!-- Products Section -->
         <div class="col-md-7">
+            <!-- Replace the product search section with this enhanced version -->
             <div class="card">
                 <div class="card-body">
-                    <div class="form-group">
-                        <input type="text" class="form-control form-control-lg" 
-                               id="product-search" placeholder="Search products by name or SKU...">
+                    <!-- Search Tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="search-tab" data-toggle="tab" href="#search-panel" role="tab">
+                                <i class="mdi mdi-magnify"></i> Search by Name/SKU
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="qr-tab" data-toggle="tab" href="#qr-panel" role="tab">
+                                <i class="mdi mdi-qrcode-scan"></i> Scan QR Code
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Search by Name/SKU -->
+                        <div class="tab-pane fade show active" id="search-panel" role="tabpanel">
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="product-search" 
+                                       placeholder="Search products by name or SKU... (Press Enter to search)">
+                            </div>
+                        </div>
+
+                        <!-- QR Code Scanner -->
+                        <div class="tab-pane fade" id="qr-panel" role="tabpanel">
+                            <div class="form-group">
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="qr-code-input" 
+                                       placeholder="Scan or enter QR code / SKU here..." 
+                                       autofocus>
+                                <small class="form-text text-muted">
+                                    <i class="mdi mdi-information"></i> 
+                                    Use a barcode/QR scanner or manually type the product SKU and press Enter
+                                </small>
+                            </div>
+
+                            <!-- Alternative: Camera Scanner Button -->
+                            <button type="button" class="btn btn-outline-primary btn-block" 
+                                    onclick="startCameraScanner()" id="camera-scanner-btn">
+                                <i class="mdi mdi-camera"></i> Use Camera Scanner
+                            </button>
+
+                            <!-- Video element for camera scanning (hidden by default) -->
+                            <div id="camera-scanner" style="display: none;" class="mt-3">
+                                <video id="qr-video" style="width: 100%; max-width: 500px; border: 2px solid #4e73df;"></video>
+                                <button type="button" class="btn btn-danger btn-block mt-2" onclick="stopCameraScanner()">
+                                    <i class="mdi mdi-close"></i> Stop Camera
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="product-grid" id="product-list">
+                        <!-- Products will be displayed here -->
                         <div class="row">
                             @foreach($products as $product)
                                 <div class="col-md-4 col-sm-6 mb-3">
@@ -88,7 +161,7 @@
                                         <div class="card-body text-center p-2">
                                             @if($product->featured_image)
                                                 <img src="{{ asset('storage/' . $product->featured_image) }}" 
-                                                     alt="{{ $product->name }}" class="product-image mb-2">
+                                                     alt="{{ $product->name }}" class="product-image mb-2" style="width:100%;">
                                             @else
                                                 <div class="product-image bg-light d-flex align-items-center justify-content-center mb-2">
                                                     <i class="mdi mdi-image mdi-48px text-muted"></i>
@@ -236,327 +309,67 @@
             </div>
         </div>
     </div>
+    <script>
+// Debug tab functionality
+$(document).ready(function() {
+    console.log('Bootstrap version:', $.fn.tooltip.Constructor.VERSION);
+    
+    // Manual tab switching if Bootstrap fails
+    $('.nav-tabs a').click(function(e) {
+        e.preventDefault();
+        
+        // Remove active from all
+        $('.nav-tabs .nav-link').removeClass('active');
+        $('.tab-pane').removeClass('show active');
+        
+        // Add active to clicked
+        $(this).addClass('active');
+        $($(this).attr('href')).addClass('show active');
+        
+        console.log('Tab switched to:', $(this).attr('href'));
+    });
+});
+</script>
 @endsection
 
+
 @push('custom-scripts')
+<!-- Ensure jQuery is loaded first (it should be from layout, but let's be explicit) -->
 <script>
-    let cart = [];
-    let selectedCustomer = null;
-
-    // Product Search
-    $('#product-search').on('keyup', function() {
-        let search = $(this).val();
-        
-        if (search.length > 2) {
-            $.get('{{ route("admin.pos.search.products") }}', { search: search }, function(products) {
-                displayProducts(products);
-            });
-        }
-    });
-
-    function displayProducts(products) {
-        let html = '<div class="row">';
-        products.forEach(product => {
-            let image = product.featured_image 
-                ? `<img src="/storage/${product.featured_image}" class="product-image mb-2">` 
-                : `<div class="product-image bg-light d-flex align-items-center justify-content-center mb-2">
-                     <i class="mdi mdi-image mdi-48px text-muted"></i>
-                   </div>`;
-            
-            html += `
-                <div class="col-md-4 col-sm-6 mb-3">
-                    <div class="card product-card" onclick="addToCart(${product.id})">
-                        <div class="card-body text-center p-2">
-                            ${image}
-                            <h6 class="mb-1">${product.name.substring(0, 30)}</h6>
-                            <p class="text-muted small mb-1">${product.sku}</p>
-                            <p class="text-success font-weight-bold mb-0">₦${parseFloat(product.sale_price || product.price).toLocaleString()}</p>
-                            <small class="text-muted">Stock: ${product.quantity}</small>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        $('#product-list').html(html);
+    // Wait for jQuery to be ready
+    if (typeof jQuery === 'undefined') {
+        console.error('jQuery is not loaded!');
     }
+</script>
 
-    // Add to cart
-    function addToCart(productId) {
-        $.get(`{{ url('admin/pos/product') }}/${productId}`, function(product) {
-            let existingItem = cart.find(item => item.id === product.id);
-            
-            if (existingItem) {
-                if (existingItem.quantity < product.quantity) {
-                    existingItem.quantity++;
-                } else {
-                    alert('Insufficient stock!');
-                    return;
-                }
-            } else {
-                cart.push({
-                    id: product.id,
-                    name: product.name,
-                    sku: product.sku,
-                    price: product.price,
-                    quantity: 1,
-                    stock: product.quantity
-                });
-            }
-            
-            updateCart();
-        });
-    }
-
-    // Update cart display
-    function updateCart() {
-        if (cart.length === 0) {
-            $('#cart-items').html('<p class="text-center text-muted">Cart is empty</p>');
-            updateTotals();
-            return;
-        }
-
-        let html = '';
-        cart.forEach((item, index) => {
-            html += `
-                <div class="cart-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div style="flex: 1;">
-                            <strong>${item.name}</strong><br>
-                            <small class="text-muted">${item.sku}</small><br>
-                            <small>₦${parseFloat(item.price).toLocaleString()} × ${item.quantity}</small>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="decreaseQuantity(${index})">
-                                <i class="mdi mdi-minus"></i>
-                            </button>
-                            <span class="mx-2">${item.quantity}</span>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="increaseQuantity(${index})">
-                                <i class="mdi mdi-plus"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger ml-2" onclick="removeFromCart(${index})">
-                                <i class="mdi mdi-delete"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="text-right mt-2">
-                        <strong>₦${(item.price * item.quantity).toLocaleString()}</strong>
-                    </div>
-                </div>
-            `;
-        });
-        
-        $('#cart-items').html(html);
-        updateTotals();
-    }
-
-    function increaseQuantity(index) {
-        if (cart[index].quantity < cart[index].stock) {
-            cart[index].quantity++;
-            updateCart();
-        } else {
-            alert('Insufficient stock!');
-        }
-    }
-
-    function decreaseQuantity(index) {
-        if (cart[index].quantity > 1) {
-            cart[index].quantity--;
-            updateCart();
-        }
-    }
-
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        updateCart();
-    }
-
-    function clearCart() {
-        if (confirm('Clear all items from cart?')) {
-            cart = [];
-            updateCart();
-        }
-    }
-
-    function updateTotals() {
-        let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        let discount = parseFloat($('#discount').val()) || 0;
-        let tax = parseFloat($('#tax').val()) || 0;
-        let total = subtotal - discount + tax;
-
-        $('#subtotal').text('₦' + subtotal.toLocaleString());
-        $('#total').text('₦' + total.toLocaleString());
-        $('#amount-paid').val(total.toFixed(2));
-        calculateChange();
-    }
-
-    function calculateChange() {
-        let total = parseFloat($('#total').text().replace('₦', '').replace(/,/g, ''));
-        let paid = parseFloat($('#amount-paid').val()) || 0;
-        let change = paid - total;
-
-        if (change >= 0) {
-            $('#change-amount').text('₦' + change.toLocaleString());
-            $('#change-display').show();
-        } else {
-            $('#change-display').hide();
-        }
-    }
-
-    // Customer Search
-    let searchTimeout;
-    $('#customer-search').on('keyup', function() {
-        clearTimeout(searchTimeout);
-        let search = $(this).val();
-        
-        if (search.length > 2) {
-            searchTimeout = setTimeout(function() {
-                $.get('{{ route("admin.pos.search.customer") }}', { search: search }, function(customers) {
-                    displayCustomers(customers);
-                });
-            }, 300);
-        } else {
-            $('#customer-results').hide();
-        }
-    });
-
-    function displayCustomers(customers) {
-        if (customers.length === 0) {
-            $('#customer-results').hide();
-            return;
-        }
-
-        let html = '';
-        customers.forEach(customer => {
-            html += `
-                <a href="#" class="list-group-item list-group-item-action" 
-                   onclick="selectCustomer(${customer.id}, '${customer.name}', '${customer.email}'); return false;">
-                    <strong>${customer.name}</strong><br>
-                    <small>${customer.email}</small>
-                </a>
-            `;
-        });
-        
-        $('#customer-results').html(html).show();
-    }
-
-    function selectCustomer(id, name, email) {
-        selectedCustomer = id;
-        $('#selected-customer-id').val(id);
-        $('#customer-name').text(name);
-        $('#customer-email').text(email);
-        $('#selected-customer').show();
-        $('#customer-results').hide();
-        $('#customer-search').val('');
-    }
-
-    // Create Quick Customer
-    function createQuickCustomer() {
-        let data = {
-            name: $('#quick-name').val(),
-            phone: $('#quick-phone').val(),
-            email: $('#quick-email').val(),
-            _token: '{{ csrf_token() }}'
-        };
-
-        $.post('{{ route("admin.pos.create.customer") }}', data, function(customer) {
-            selectCustomer(customer.id, customer.name, customer.email);
-            $('#createCustomerModal').modal('hide');
-            $('#quick-customer-form')[0].reset();
-        }).fail(function(error) {
-            alert('Error creating customer: ' + (error.responseJSON?.message || 'Unknown error'));
-        });
-    }
-
-    // Complete Sale
-    function completeSale() {
-        if (cart.length === 0) {
-            alert('Cart is empty!');
-            return;
-        }
-
-        if (!selectedCustomer) {
-            alert('Please select a customer!');
-            return;
-        }
-
-        let total = parseFloat($('#total').text().replace('₦', '').replace(/,/g, ''));
-        let amountPaid = parseFloat($('#amount-paid').val()) || 0;
-
-        if (amountPaid < total) {
-            alert('Insufficient payment amount!');
-            return;
-        }
-
-        let data = {
-            customer_id: selectedCustomer,
-            items: cart.map(item => ({
-                product_id: item.id,
-                quantity: item.quantity,
-                price: item.price
-            })),
-            payment_method: $('#payment-method').val(),
-            amount_paid: amountPaid,
-            discount: parseFloat($('#discount').val()) || 0,
-            tax: parseFloat($('#tax').val()) || 0,
-            _token: '{{ csrf_token() }}'
-        };
-
-        $.post('{{ route("admin.pos.process.sale") }}', data, function(response) {
-            alert('Sale completed successfully!\nChange: ₦' + response.change.toLocaleString());
-            
-            // Ask if user wants to print receipt
-            if (confirm('Do you want to print the receipt?')) {
-                window.open('{{ url("admin/pos/receipt") }}/' + response.order.id, '_blank');
-            }
-            
-            // Reset
-            cart = [];
-            selectedCustomer = null;
-            $('#selected-customer').hide();
-            $('#discount').val(0);
-            $('#tax').val(0);
-            updateCart();
-            location.reload();
-        }).fail(function(error) {
-            alert('Error: ' + (error.responseJSON?.error || 'Failed to process sale'));
-        });
-    }
+<!-- POS Configuration - MUST load before pos.js -->
+<script>
+    // Define routes and CSRF token for POS JavaScript
+    window.ROUTES = {
+        searchProducts: '{{ route("admin.pos.search.products") }}',
+        getProduct: '{{ url("admin/pos/product/:id") }}',
+        searchQR: '{{ route("admin.pos.search.qr") }}',
+        searchCustomer: '{{ route("admin.pos.search.customer") }}',
+        createCustomer: '{{ route("admin.pos.create.customer") }}',
+        processSale: '{{ route("admin.pos.process.sale") }}',
+        receipt: '{{ url("admin/pos/receipt/:order") }}'
+    };
     
-    // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // F9 - Complete Sale
-            if (e.key === 'F9') {
-                e.preventDefault();
-                completeSale();
-            }
+    window.CSRF_TOKEN = '{{ csrf_token() }}';
+    
+    console.log('Routes loaded:', window.ROUTES);
+</script>
 
-            // ESC - Clear Cart
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                clearCart();
-            }
+<!-- QR Code Library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-            // F2 - Focus on product search
-            if (e.key === 'F2') {
-                e.preventDefault();
-                $('#product-search').focus();
-            }
+<!-- POS Main Script - Load LAST -->
+<script src="{{ asset('admin/js/pos.js') }}?v={{ time() }}"></script>
 
-            // F3 - Focus on customer search
-            if (e.key === 'F3') {
-                e.preventDefault();
-                $('#customer-search').focus();
-            }
-        });
-
-        // Show keyboard shortcuts help
-        console.log(`
-        POS Keyboard Shortcuts:
-        - F2: Focus Product Search
-        - F3: Focus Customer Search
-        - F9: Complete Sale
-        - ESC: Clear Cart
-        `);
+<script>
+    // Verify everything loaded
+    console.log('jQuery version:', $.fn.jquery);
+    console.log('ROUTES available:', typeof ROUTES !== 'undefined');
+    console.log('CSRF_TOKEN available:', typeof CSRF_TOKEN !== 'undefined');
 </script>
 @endpush

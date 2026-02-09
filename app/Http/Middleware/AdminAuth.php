@@ -15,11 +15,19 @@ class AdminAuth
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+     public function handle(Request $request, Closure $next): Response
     {
-       if (!Auth::guard('admin')->check()) {
-            return redirect()->route('admin.login')
-                ->with('error', 'Please login to access admin panel.');
+        // Check if user is authenticated as admin
+        if (!Auth::guard('admin')->check()) {
+            // If not authenticated and not already on login page, redirect to login
+            if (!$request->is('admin/login')) {
+                return redirect()->route('admin.login');
+            }
+        }
+
+        // If authenticated but trying to access login page, redirect to dashboard
+        if (Auth::guard('admin')->check() && $request->is('admin/login')) {
+            return redirect()->route('admin.dashboard');
         }
 
         return $next($request);

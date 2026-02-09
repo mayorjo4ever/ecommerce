@@ -2,16 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\QRCodeHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
-use App\Helpers\QRCodeHelper;
+use App\Models\Product;
+use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use function asset;
+use function auth;
+use function GuzzleHttp\json_encode;
+use function response;
+use function Symfony\Component\Clock\now;
+use function view;
 
 class POSController extends Controller
 {
@@ -20,6 +28,8 @@ class POSController extends Controller
      */
     public function index()
     {
+        Session::put('page','pos');
+        
         $products = Product::where('is_active', true)
             ->where('quantity', '>', 0)
             ->with('category')
@@ -220,7 +230,7 @@ class POSController extends Controller
                 'change' => $validated['amount_paid'] - $total,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'error' => 'Failed to process sale: ' . $e->getMessage()
@@ -251,4 +261,38 @@ class POSController extends Controller
         
         return view('admin.pos.history', compact('sales'));
     }
+    
+    /**
+ * Search product by QR code
+ */
+public function searchByQRCode(Request $request)
+{
+    $qrCode = $request->input('qr_code');
+    
+    // QR code contains the product URL, so we need to extract the slug
+    // Format: http://yoursite.com/products/product-slug
+    $slug = basename(parse_url($qrCode, PHP_URL_PATH));
+    
+    $product = Product::where('slug', $slug)
+        ->orWhere('sku', $qrCode)
+        ->where('is_active', true)
+        ->where('quantity', '>', 0)
+        ->first();
+    
+    if (!$product) {
+        return response()->json(['error' => 'Product not found'], 404);
+    }
+    
+    return response()->json([
+        'id' => $product->id,
+        'name' => $product->name,
+        'sku' => $product->sku,
+        'price' => $product->getCurrentPrice(),
+        'regular_price' => $product->price,
+        'sale_price' => $product->sale_price,
+        'quantity' => $product->quantity,
+        'category' => $product->category->name ?? 'N/A',
+        'image' => $product->featured_image ? asset('storage/' . $product->featured_image) : null,
+    ]);
+}
 }

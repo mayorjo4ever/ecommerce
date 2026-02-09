@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,14 +7,19 @@ Route::get('/', function () {
     return redirect('admin/login');
 });
 
-Route::get('/test-routes', function () {
-    return [
-        'categories_index' => route('admin.categories.index'),
-        'products_index' => route('admin.products.index'),
-        'orders_index' => route('admin.orders.index'),
-        'dashboard' => route('admin.dashboard'),
-    ];
-});
+
+// require __DIR__.'/auth.php';
+// Include admin routes
+require __DIR__.'/admin.php';
+
+//Route::get('/test-routes', function () {
+//    return [
+//        'categories_index' => route('admin.categories.index'),
+//        'products_index' => route('admin.products.index'),
+//        'orders_index' => route('admin.orders.index'),
+//        'dashboard' => route('admin.dashboard'),
+//    ];
+//});
 
 //Route::get('/dashboard', function () {
 //    return view('dashboard');
@@ -28,7 +32,3 @@ Route::get('/test-routes', function () {
 //});
 
 
-
-require __DIR__.'/auth.php';
-// Include admin routes
-require __DIR__.'/admin.php';
