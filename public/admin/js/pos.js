@@ -514,3 +514,147 @@ if (!$('#pos-animations').length) {
 }
 
 
+
+// ==================== PAYMENT MANAGEMENT ====================
+let paymentMethods = [];
+let allowPartialPayment = false;
+
+window.addPaymentMethod = function() {
+    const paymentRow = `
+        <div class="payment-method-row mb-2">
+            <div class="row">
+                <div class="col-7">
+                    <select class="form-control form-control-sm payment-method">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="pos">POS</option>
+                        <option value="transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control form-control-sm payment-amount" 
+                           placeholder="Amount" min="0" step="0.01" value="0" onchange="calculatePaymentTotals()">
+                </div>
+                <div class="col-1 p-0">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentMethod(this)">
+                        <i class="mdi mdi-close"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#payment-methods').append(paymentRow);
+    calculatePaymentTotals();
+};
+
+window.removePaymentMethod = function(button) {
+    $(button).closest('.payment-method-row').remove();
+    calculatePaymentTotals();
+};
+
+window.togglePartialPayment = function() {
+    allowPartialPayment = $('#allow-partial').is(':checked');
+    calculatePaymentTotals();
+};
+
+function calculatePaymentTotals() {
+    let totalPaying = 0;
+    
+    $('.payment-amount').each(function() {
+        totalPaying += parseFloat($(this).val()) || 0;
+    });
+    
+    let orderTotal = parseFloat($('#total').text().replace('₦', '').replace(/,/g, ''));
+    let balance = orderTotal - totalPaying;
+    let change = totalPaying - orderTotal;
+    
+    $('#total-paying').text('₦' + totalPaying.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+    $('#payment-balance').text('₦' + Math.abs(balance).toLocaleString('en-NG', {minimumFractionDigits: 2}));
+    $('#payment-summary').show();
+    
+    if (change > 0) {
+        $('#change-amount').text('₦' + change.toLocaleString('en-NG', {minimumFractionDigits: 2}));
+        $('#change-display').show();
+    } else {
+        $('#change-display').hide();
+    }
+}
+
+// Update the completeSale function
+window.completeSale = function() {
+    if (cart.length === 0) {
+        showNotification('Cart is empty!', 'warning');
+        return;
+    }
+
+    if (!selectedCustomer) {
+        showNotification('Please select a customer!', 'warning');
+        return;
+    }
+
+    // Collect payment methods
+    let payments = [];
+    $('.payment-method-row').each(function() {
+        let method = $(this).find('.payment-method').val();
+        let amount = parseFloat($(this).find('.payment-amount').val()) || 0;
+        
+        if (amount > 0) {
+            payments.push({ method: method, amount: amount });
+        }
+    });
+
+    if (payments.length === 0) {
+        showNotification('Please add at least one payment method!', 'warning');
+        return;
+    }
+
+    let total = parseFloat($('#total').text().replace('₦', '').replace(/,/g, ''));
+    let totalPaying = payments.reduce((sum, p) => sum + p.amount, 0);
+
+    // Check if payment is sufficient or partial payment is allowed
+    if (totalPaying < total && !allowPartialPayment) {
+        showNotification('Insufficient payment amount! Enable "Allow Partial Payment" or add more payment.', 'warning');
+        return;
+    }
+
+    let data = {
+        customer_id: selectedCustomer,
+        items: cart.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        payments: payments,
+        discount: parseFloat($('#discount').val()) || 0,
+        tax: parseFloat($('#tax').val()) || 0,
+        _token: CSRF_TOKEN
+    };
+
+    $.post(ROUTES.processSale, data, function(response) {
+        let message = response.payment_status === 'paid' 
+            ? 'Sale completed successfully!'
+            : `Partial payment recorded!\nBalance: ₦${response.balance.toLocaleString('en-NG', {minimumFractionDigits: 2})}`;
+        
+        showNotification(message, 'success');
+        
+        let printMessage = response.payment_status === 'paid'
+            ? `Sale completed!\nChange: ₦${response.change.toLocaleString('en-NG', {minimumFractionDigits: 2})}\n\nPrint receipt?`
+            : `Partial payment recorded!\nBalance: ₦${response.balance.toLocaleString('en-NG', {minimumFractionDigits: 2})}\n\nPrint receipt?`;
+        
+        if (confirm(printMessage)) {
+            window.open(ROUTES.receipt.replace(':order', response.order.id), '_blank');
+        }
+        
+        // Reset
+        resetPOS();
+    }).fail(function(error) {
+        let errorMsg = error.responseJSON?.error || 'Failed to process sale';
+        showNotification('Error: ' + errorMsg, 'error');
+    });
+};
+
+// Add event listener for payment amount changes
+$(document).on('change keyup', '.payment-amount', function() {
+    calculatePaymentTotals();
+});

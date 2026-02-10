@@ -226,23 +226,41 @@
 
         <!-- Payment Info -->
         <div class="payment-info">
+            <div class="section-title">Payment Details</div>
+            @foreach($order->payments as $payment)
+                <div class="info-row">
+                    <span class="text-uppercase">{{ $payment->payment_method }}:</span>
+                    <span>₦{{ number_format($payment->amount, 2) }}</span>
+                </div>
+            @endforeach
+            <div style="border-top: 1px dashed #000; margin: 5px 0;"></div>
             <div class="info-row">
-                <strong>Payment Method:</strong>
-                <span class="text-uppercase">{{ $order->payment->payment_method }}</span>
+                <strong>Total Paid:</strong>
+                <strong>₦{{ number_format($order->amount_paid, 2) }}</strong>
             </div>
-            <div class="info-row">
-                <strong>Amount Paid:</strong>
-                <span>₦{{ number_format($order->payment->amount, 2) }}</span>
-            </div>
-            @if(isset($order->payment->payment_details['change']) && $order->payment->payment_details['change'] > 0)
-            <div class="info-row">
-                <strong>Change:</strong>
-                <span>₦{{ number_format($order->payment->payment_details['change'], 2) }}</span>
-            </div>
+            @if($order->balance > 0)
+                <div class="info-row" style="color: red;">
+                    <strong>Balance Due:</strong>
+                    <strong>₦{{ number_format($order->balance, 2) }}</strong>
+                </div>
+            @else
+                @php
+                    $firstPayment = $order->payments->first();
+                    $details = is_array($firstPayment?->payment_details)
+                        ? $firstPayment->payment_details
+                        : json_decode($firstPayment?->payment_details, true);
+                    $change = ($details['change'] ?? 0);
+                @endphp
+                @if($change > 0)
+                    <div class="info-row">
+                        <strong>Change:</strong>
+                        <strong>₦{{ number_format($change, 2) }}</strong>
+                    </div>
+                @endif
             @endif
             <div class="info-row">
-                <strong>Status:</strong>
-                <span class="text-uppercase">{{ $order->payment->status }}</span>
+                <strong>Payment Status:</strong>
+                <span class="text-uppercase">{{ $order->payment_status }}</span>
             </div>
         </div>
 

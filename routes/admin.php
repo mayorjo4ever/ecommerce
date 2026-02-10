@@ -14,10 +14,6 @@ use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoleController;
 use Illuminate\Support\Facades\Route;
 
-// Frontend Routes
-Route::get('/', function () {
-    return view('welcome');
-});
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -48,7 +44,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('categories', CategoryController::class);
         
         // Orders
+        Route::resource('orders', OrderController::class);       
         Route::resource('orders', OrderController::class);
+        Route::get('orders-export', [OrderController::class, 'export'])->name('orders.export');
+
+        
         
         // Customers
         Route::resource('customers', CustomerController::class);
@@ -79,6 +79,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/process-sale', [POSController::class, 'processSale'])->name('process.sale');
             Route::get('/receipt/{order}', [POSController::class, 'printReceipt'])->name('receipt');
             Route::get('/history', [POSController::class, 'salesHistory'])->name('history');
+            Route::post('/record-payment/{order}', [POSController::class, 'recordPayment'])->name('record.payment');
         });
+        
+        // POS History Export
+        Route::get('pos/export', [POSController::class, 'exportHistory'])->name('pos.export');
+        
     });
 });

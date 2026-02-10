@@ -245,23 +245,58 @@
 
                 <!-- Payment Section -->
                 <div class="mt-3">
-                    <label>Payment Method</label>
-                    <select class="form-control" id="payment-method">
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="pos">POS</option>
-                        <option value="transfer">Bank Transfer</option>
-                    </select>
-                </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="mb-0">Payment Methods</label>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addPaymentMethod()">
+                            <i class="mdi mdi-plus"></i> Add Payment
+                        </button>
+                    </div>
 
-                <div class="mt-3">
-                    <label>Amount Paid</label>
-                    <input type="number" class="form-control" id="amount-paid" 
-                           value="0" min="0" step="0.01" onchange="calculateChange()">
+                    <div id="payment-methods">
+                        <!-- Payment method rows will be added here -->
+                        <div class="payment-method-row mb-2">
+                            <div class="row">
+                                <div class="col-7">
+                                    <select class="form-control form-control-sm payment-method">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="pos">POS</option>
+                                        <option value="transfer">Bank Transfer</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control form-control-sm payment-amount" 
+                                           placeholder="Amount" min="0" step="0.01" value="0">
+                                </div>
+                                <div class="col-1 p-0">
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="removePaymentMethod(this)" style="display:none;">
+                                        <i class="mdi mdi-close"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-2" style="display:none;" id="payment-summary">
+                        <small>
+                            <strong>Total Paying:</strong> <span id="total-paying">₦0.00</span><br>
+                            <strong>Balance:</strong> <span id="payment-balance">₦0.00</span>
+                        </small>
+                    </div>
                 </div>
 
                 <div class="mt-2">
-                    <div class="alert alert-success" id="change-display" style="display: none;">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input type="checkbox" class="form-check-input" id="allow-partial" onchange="togglePartialPayment()">
+                            Allow Partial Payment
+                            <i class="input-helper"></i>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-2" id="change-display" style="display: none;">
+                    <div class="alert alert-success">
                         Change: <strong id="change-amount">₦0.00</strong>
                     </div>
                 </div>
