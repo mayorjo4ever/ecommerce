@@ -1,11 +1,11 @@
 @extends('admin.layouts.app')
-@section('title', 'Create Coupon')
+@section('title', 'Edit Coupon')
 
 @section('content')
     <div class="row">
         <div class="col-md-12 grid-margin">
             <div class="d-flex justify-content-between align-items-center">
-                <h4 class="font-weight-bold mb-0">Create New Coupon</h4>
+                <h4 class="font-weight-bold mb-0">Edit Coupon: {{ $coupon->code }}</h4>
                 <a href="{{ route('admin.coupons.index') }}" class="btn btn-secondary">
                     <i class="mdi mdi-arrow-left"></i> Back
                 </a>
@@ -19,8 +19,8 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.coupons.store') }}" method="POST">
-        @csrf
+    <form action="{{ route('admin.coupons.update', $coupon->id) }}" method="POST">
+        @csrf @method('PUT')
         <div class="row">
             <div class="col-md-8">
                 <div class="card mb-4">
@@ -32,13 +32,12 @@
                             <div class="input-group">
                                 <input type="text" class="form-control @error('code') is-invalid @enderror"
                                        name="code" id="coupon-code"
-                                       value="{{ old('code') }}"
-                                       placeholder="e.g. SAVE20"
+                                       value="{{ old('code', $coupon->code) }}"
                                        style="text-transform:uppercase;" required>
                                 <div class="input-group-append">
                                     <button type="button" class="btn btn-outline-primary"
                                             onclick="generateCode()">
-                                        <i class="mdi mdi-refresh"></i> Generate
+                                        <i class="mdi mdi-refresh"></i> Generate New
                                     </button>
                                 </div>
                             </div>
@@ -50,35 +49,32 @@
                         <div class="form-group">
                             <label>Description</label>
                             <input type="text" class="form-control" name="description"
-                                   value="{{ old('description') }}"
-                                   placeholder="e.g. 20% off for all orders">
+                                   value="{{ old('description', $coupon->description) }}">
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Discount Type <span class="text-danger">*</span></label>
-                                    <select class="form-control @error('type') is-invalid @enderror"
-                                            name="type" id="discount-type" onchange="toggleValueLabel()">
-                                        <option value="percentage" {{ old('type') === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
-                                        <option value="fixed" {{ old('type') === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
+                                    <select class="form-control" name="type" id="discount-type" onchange="toggleValueLabel()">
+                                        <option value="percentage" {{ old('type', $coupon->type) === 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                                        <option value="fixed" {{ old('type', $coupon->type) === 'fixed' ? 'selected' : '' }}>Fixed Amount (₦)</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label id="value-label">Discount Value <span class="text-danger">*</span></label>
+                                    <label>Discount Value <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text" id="value-prefix">%</span>
+                                            <span class="input-group-text" id="value-prefix">
+                                                {{ $coupon->type === 'percentage' ? '%' : '₦' }}
+                                            </span>
                                         </div>
-                                        <input type="number" class="form-control @error('value') is-invalid @enderror"
-                                               name="value" value="{{ old('value') }}"
+                                        <input type="number" class="form-control"
+                                               name="value" value="{{ old('value', $coupon->value) }}"
                                                step="0.01" min="0" required>
                                     </div>
-                                    @error('value')
-                                        <span class="text-danger small">{{ $message }}</span>
-                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -93,9 +89,8 @@
                                         </div>
                                         <input type="number" class="form-control"
                                                name="minimum_purchase"
-                                               value="{{ old('minimum_purchase') }}"
-                                               step="0.01" min="0"
-                                               placeholder="0 = No minimum">
+                                               value="{{ old('minimum_purchase', $coupon->minimum_purchase) }}"
+                                               step="0.01" min="0">
                                     </div>
                                 </div>
                             </div>
@@ -104,9 +99,9 @@
                                     <label>Usage Limit</label>
                                     <input type="number" class="form-control"
                                            name="usage_limit"
-                                           value="{{ old('usage_limit') }}"
-                                           min="1"
-                                           placeholder="Leave empty for unlimited">
+                                           value="{{ old('usage_limit', $coupon->usage_limit) }}"
+                                           min="1" placeholder="Unlimited">
+                                    <small class="text-muted">Used: {{ $coupon->used_count }} times</small>
                                 </div>
                             </div>
                         </div>
@@ -115,15 +110,17 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Valid From</label>
-                                    <input type="date" class="form-control @error('valid_from') is-invalid @enderror"
-                                           name="valid_from" value="{{ old('valid_from') }}">
+                                    <input type="date" class="form-control"
+                                           name="valid_from"
+                                           value="{{ old('valid_from', $coupon->valid_from?->format('Y-m-d')) }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Valid Until</label>
-                                    <input type="date" class="form-control @error('valid_until') is-invalid @enderror"
-                                           name="valid_until" value="{{ old('valid_until') }}">
+                                    <input type="date" class="form-control"
+                                           name="valid_until"
+                                           value="{{ old('valid_until', $coupon->valid_until?->format('Y-m-d')) }}">
                                 </div>
                             </div>
                         </div>
@@ -135,43 +132,60 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title">Status</h4>
-                        <div class="form-check">
+                        <div class="form-check mb-3">
                             <label class="form-check-label">
                                 <input type="checkbox" class="form-check-input"
                                        name="is_active" value="1"
-                                       {{ old('is_active', true) ? 'checked' : '' }}>
+                                       {{ old('is_active', $coupon->is_active) ? 'checked' : '' }}>
                                 Active
                                 <i class="input-helper"></i>
                             </label>
+                        </div>
+                        <div>
+                            <strong>Current Status:</strong><br>
+                            <span class="badge badge-{{ $coupon->status_color }}">
+                                {{ ucfirst($coupon->status) }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h4 class="card-title">Preview</h4>
-                        <div class="text-center">
-                            <div class="border border-dashed p-3 rounded" id="coupon-preview">
-                                <h3 class="text-primary" id="preview-code">COUPON</h3>
-                                <p class="text-success font-weight-bold" id="preview-value">Save 0%</p>
-                                <small class="text-muted" id="preview-min">No minimum purchase</small>
-                            </div>
+                        <h4 class="card-title">Statistics</h4>
+                        <div class="mb-2">
+                            <strong>Times Used:</strong> {{ $coupon->used_count }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Remaining Uses:</strong> {{ $coupon->remaining_uses }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created:</strong> {{ $coupon->created_at->format('d M Y') }}
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-body">
-                        <button type="submit" class="btn btn-primary btn-block btn-lg">
-                            <i class="mdi mdi-content-save"></i> Create Coupon
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="mdi mdi-content-save"></i> Update Coupon
                         </button>
                         <a href="{{ route('admin.coupons.index') }}" class="btn btn-light btn-block">
                             Cancel
                         </a>
+                        <button type="button" class="btn btn-danger btn-block"
+                                onclick="deleteCoupon({{ $coupon->id }})">
+                            <i class="mdi mdi-delete"></i> Delete Coupon
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+    </form>
+
+    <form id="delete-coupon-form" action="{{ route('admin.coupons.destroy', $coupon->id) }}"
+          method="POST" style="display:none;">
+        @csrf @method('DELETE')
     </form>
 @endsection
 
@@ -180,42 +194,20 @@
     function generateCode() {
         $.get('{{ route("admin.coupons.generate") }}', function(response) {
             $('#coupon-code').val(response.code);
-            updatePreview();
         });
     }
 
     function toggleValueLabel() {
         const type = $('#discount-type').val();
         $('#value-prefix').text(type === 'percentage' ? '%' : '₦');
-        updatePreview();
     }
 
-    function updatePreview() {
-        const code = $('#coupon-code').val() || 'COUPON';
-        const type = $('#discount-type').val();
-        const value = $('input[name="value"]').val() || 0;
-        const minPurchase = $('input[name="minimum_purchase"]').val();
-
-        $('#preview-code').text(code.toUpperCase());
-        
-        if (type === 'percentage') {
-            $('#preview-value').text('Save ' + value + '%');
-        } else {
-            $('#preview-value').text('Save ₦' + parseFloat(value).toLocaleString());
+    function deleteCoupon(id) {
+        if (confirm('Are you sure you want to delete this coupon?')) {
+            document.getElementById('delete-coupon-form').submit();
         }
-
-        $('#preview-min').text(
-            minPurchase && minPurchase > 0 
-                ? 'Min. purchase: ₦' + parseFloat(minPurchase).toLocaleString()
-                : 'No minimum purchase'
-        );
     }
 
-    // Live preview updates
-    $('#coupon-code, input[name="value"], input[name="minimum_purchase"]').on('keyup change', updatePreview);
-    $('#discount-type').on('change', updatePreview);
-    
     toggleValueLabel();
-    updatePreview();
 </script>
 @endpush

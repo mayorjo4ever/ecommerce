@@ -95,6 +95,21 @@
         </li>
         @endif
          
+        <!-- Reports -->
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.reports.index') }}">
+                <i class="icon-chart menu-icon"></i>
+                <span class="menu-title">Reports</span>
+            </a>
+        </li>
+
+        <!-- Stock Taking -->
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.stock-takes.index') }}">
+                <i class="icon-clipboard menu-icon"></i>
+                <span class="menu-title">Stock Taking</span>
+            </a>
+        </li>
 
         <li class="nav-item">
             <a class="nav-link" href="{{ route('admin.settings') }}">

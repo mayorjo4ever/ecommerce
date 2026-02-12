@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Coupon extends Model
 {
-   use HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'code',
@@ -20,6 +20,7 @@ class Coupon extends Model
         'valid_from',
         'valid_until',
         'is_active',
+        'description',
     ];
 
     protected $casts = [
@@ -33,42 +34,91 @@ class Coupon extends Model
     /**
      * Check if coupon is valid
      */
-    public function isValid(): bool
+    public function isValid($cartTotal = 0)
     {
+        // Check if active
         if (!$this->is_active) {
-            return false;
+            return ['valid' => false, 'message' => 'Coupon is inactive.'];
         }
 
-        $now = Carbon::now();
-
-        if ($this->valid_from && $now->lt($this->valid_from)) {
-            return false;
+        // Check date range
+        if ($this->valid_from && Carbon::now()->lt($this->valid_from)) {
+            return ['valid' => false, 'message' => 'Coupon is not yet valid.'];
         }
 
-        if ($this->valid_until && $now->gt($this->valid_until)) {
-            return false;
+        if ($this->valid_until && Carbon::now()->gt($this->valid_until)) {
+            return ['valid' => false, 'message' => 'Coupon has expired.'];
         }
 
+        // Check usage limit
         if ($this->usage_limit && $this->used_count >= $this->usage_limit) {
-            return false;
+            return ['valid' => false, 'message' => 'Coupon usage limit reached.'];
         }
 
-        return true;
+        // Check minimum purchase
+        if ($this->minimum_purchase && $cartTotal < $this->minimum_purchase) {
+            return [
+                'valid' => false,
+                'message' => 'Minimum purchase of ₦' . number_format($this->minimum_purchase, 2) . ' required.'
+            ];
+        }
+
+        return ['valid' => true, 'message' => 'Coupon is valid.'];
     }
 
     /**
      * Calculate discount amount
      */
-    public function calculateDiscount($subtotal)
+    public function calculateDiscount($cartTotal)
     {
-        if ($this->minimum_purchase && $subtotal < $this->minimum_purchase) {
-            return 0;
-        }
-
         if ($this->type === 'percentage') {
-            return ($subtotal * $this->value) / 100;
+            return round(($cartTotal * $this->value) / 100, 2);
         }
 
-        return $this->value;
+        return min($this->value, $cartTotal);
+    }
+
+    /**
+     * Increment usage count
+     */
+    public function incrementUsage()
+    {
+        $this->increment('used_count');
+    }
+
+    /**
+     * Get status
+     */
+    public function getStatusAttribute()
+    {
+        if (!$this->is_active) return 'inactive';
+        if ($this->valid_until && Carbon::now()->gt($this->valid_until)) return 'expired';
+        if ($this->valid_from && Carbon::now()->lt($this->valid_from)) return 'scheduled';
+        if ($this->usage_limit && $this->used_count >= $this->usage_limit) return 'exhausted';
+        return 'active';
+    }
+
+    /**
+     * Get status color
+     */
+    public function getStatusColorAttribute()
+    {
+        return match($this->status) {
+            'active' => 'success',
+            'inactive' => 'secondary',
+            'expired' => 'danger',
+            'scheduled' => 'info',
+            'exhausted' => 'warning',
+            default => 'secondary',
+        };
+    }
+
+    /**
+     * Get remaining uses
+     */
+    public function getRemainingUsesAttribute()
+    {
+        if (!$this->usage_limit) return 'Unlimited';
+        return max(0, $this->usage_limit - $this->used_count);
     }
 }

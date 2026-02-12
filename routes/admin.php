@@ -10,8 +10,10 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\StockTakeController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -53,9 +55,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Customers
         Route::resource('customers', CustomerController::class);
         
-        // Coupons
+        // Coupons        
         Route::resource('coupons', CouponController::class);
+        Route::get('coupons-generate', [CouponController::class, 'generate'])->name('coupons.generate');
+        Route::post('coupons-validate', [CouponController::class, 'validate'])->name('coupons.validate');
         
+
         // Reviews
         Route::resource('reviews', ReviewController::class);
         
@@ -85,5 +90,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // POS History Export
         Route::get('pos/export', [POSController::class, 'exportHistory'])->name('pos.export');
         
+        
+
+    // Reports
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+
+    // Stock Takes
+    Route::resource('stock-takes', StockTakeController::class);
+    Route::post('stock-takes/{stockTake}/complete', [StockTakeController::class, 'complete'])->name('stock-takes.complete');
+    Route::post('stock-takes/{stockTake}/items/{item}', [StockTakeController::class, 'updateItem'])->name('stock-takes.update-item');
+    Route::get('stock-takes/{stockTake}/export', [StockTakeController::class, 'export'])->name('stock-takes.export');
     });
 });
