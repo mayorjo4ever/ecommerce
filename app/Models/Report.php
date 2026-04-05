@@ -253,10 +253,11 @@ class Report extends Model
     }
 
     /**
-     * Get POS vs Online revenue breakdown
-     */
-    public static function getPOSvsOnlineRevenue(Carbon $startDate, Carbon $endDate): array
-    {
+ * Get POS vs Online revenue breakdown
+ */
+public static function getPOSvsOnlineRevenue(Carbon $startDate, Carbon $endDate): array
+{
+    try {
         $pos = Order::where('order_number', 'like', 'POS-%')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['paid', 'partial'])
@@ -268,22 +269,25 @@ class Report extends Model
             ->sum('amount_paid');
 
         return [
-            'pos'    => (float) $pos,
-            'online' => (float) $online,
-            'total'  => (float) ($pos + $online),
+            'pos'    => (float) ($pos ?? 0),
+            'online' => (float) ($online ?? 0),
+            'total'  => (float) (($pos ?? 0) + ($online ?? 0)),
         ];
+    } catch (\Exception $e) {
+        \Log::error('Error calculating POS vs Online revenue: ' . $e->getMessage());
+        return ['pos' => 0.0, 'online' => 0.0, 'total' => 0.0];
     }
+}
 
-    // ==================== PRODUCT REPORTS ====================
-
-    /**
-     * Get top selling products
-     */
-    public static function getTopSellingProducts(
-        Carbon $startDate,
-        Carbon $endDate,
-        int $limit = 10
-    ): array {
+/**
+ * Get top selling products
+ */
+public static function getTopSellingProducts(
+    Carbon $startDate,
+    Carbon $endDate,
+    int $limit = 10
+): array {
+    try {
         return OrderItem::with('product.category')
             ->whereHas('order', function($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate, $endDate]);
@@ -299,20 +303,28 @@ class Report extends Model
             ->limit($limit)
             ->get()
             ->toArray();
+    } catch (\Exception $e) {
+        \Log::error('Error getting top selling products: ' . $e->getMessage());
+        return [];
     }
-
+}
     /**
-     * Get low stock products
-     */
-    public static function getLowStockProducts(int $threshold = 10): array
-    {
+ * Get low stock products
+ */
+public static function getLowStockProducts(int $threshold = 10): array
+{
+    try {
         return Product::with('category')
             ->where('is_active', true)
             ->where('quantity', '<=', $threshold)
             ->orderBy('quantity')
             ->get()
             ->toArray();
+    } catch (\Exception $e) {
+        \Log::error('Error getting low stock products: ' . $e->getMessage());
+        return [];
     }
+}
 
     /**
      * Get out of stock products
@@ -354,13 +366,14 @@ class Report extends Model
     }
 
     /**
-     * Get top spending customers
-     */
-    public static function getTopCustomers(
-        Carbon $startDate,
-        Carbon $endDate,
-        int $limit = 10
-    ): array {
+ * Get top spending customers
+ */
+public static function getTopCustomers(
+    Carbon $startDate,
+    Carbon $endDate,
+    int $limit = 10
+): array {
+    try {
         return Order::with('user')
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['paid', 'partial'])
@@ -375,7 +388,11 @@ class Report extends Model
             ->limit($limit)
             ->get()
             ->toArray();
+    } catch (\Exception $e) {
+        \Log::error('Error getting top customers: ' . $e->getMessage());
+        return [];
     }
+}
 
     // ==================== COUPON REPORTS ====================
 
@@ -395,43 +412,54 @@ class Report extends Model
     // ==================== SUMMARY REPORT ====================
 
     /**
-     * Get complete summary for a period
-     */
-    public static function getSummary(Carbon $startDate, Carbon $endDate): array
-    {
-        [$prevStart, $prevEnd] = self::getPreviousPeriodRange($startDate, $endDate);
+ * Get complete summary for a period
+ */
+public static function getSummary(Carbon $startDate, Carbon $endDate): array
+{
+    [$prevStart, $prevEnd] = self::getPreviousPeriodRange($startDate, $endDate);
 
-        $currentRevenue  = self::getTotalRevenue($startDate, $endDate);
-        $previousRevenue = self::getTotalRevenue($prevStart, $prevEnd);
+    $currentRevenue  = self::getTotalRevenue($startDate, $endDate);
+    $previousRevenue = self::getTotalRevenue($prevStart, $prevEnd);
 
-        $currentOrders  = self::getTotalOrders($startDate, $endDate);
-        $previousOrders = self::getTotalOrders($prevStart, $prevEnd);
+    $currentOrders  = self::getTotalOrders($startDate, $endDate);
+    $previousOrders = self::getTotalOrders($prevStart, $prevEnd);
 
-        $currentCustomers  = self::getNewCustomers($startDate, $endDate);
-        $previousCustomers = self::getNewCustomers($prevStart, $prevEnd);
+    $currentCustomers  = self::getNewCustomers($startDate, $endDate);
+    $previousCustomers = self::getNewCustomers($prevStart, $prevEnd);
 
-        return [
-            // Current period
-            'total_revenue'       => $currentRevenue,
-            'total_orders'        => $currentOrders,
-            'new_customers'       => $currentCustomers,
-            'avg_order_value'     => self::getAverageOrderValue($startDate, $endDate),
-            'outstanding_balance' => self::getTotalOutstanding($startDate, $endDate),
+    $posVsOnline = self::getPOSvsOnlineRevenue($startDate, $endDate);
 
-            // POS vs Online
-            'pos_vs_online' => self::getPOSvsOnlineRevenue($startDate, $endDate),
+    return [
+        // Current period
+        'total_revenue'       => $currentRevenue,
+        'total_orders'        => $currentOrders,
+        'total_customers'     => $currentCustomers, // Added this
+        'new_customers'       => $currentCustomers, // Keep both for compatibility
+        'avg_order_value'     => self::getAverageOrderValue($startDate, $endDate),
+        'outstanding_balance' => self::getTotalOutstanding($startDate, $endDate),
 
-            // Growth comparisons
-            'revenue_growth'   => self::calculateGrowth($currentRevenue, $previousRevenue),
-            'orders_growth'    => self::calculateGrowth($currentOrders, $previousOrders),
-            'customers_growth' => self::calculateGrowth($currentCustomers, $previousCustomers),
+        // POS vs Online (ensure it's always an array)
+        'pos_vs_online' => [
+            'pos'    => $posVsOnline['pos'] ?? 0,
+            'online' => $posVsOnline['online'] ?? 0,
+            'total'  => $posVsOnline['total'] ?? 0,
+        ],
 
-            // Previous period
-            'prev_revenue' => $previousRevenue,
-            'prev_orders'  => $previousOrders,
-        ];
-    }
+        // Growth comparisons
+        'revenue_growth'   => self::calculateGrowth($currentRevenue, $previousRevenue),
+        'orders_growth'    => self::calculateGrowth($currentOrders, $previousOrders),
+        'customers_growth' => self::calculateGrowth($currentCustomers, $previousCustomers),
 
+        // Previous period
+        'prev_revenue'    => $previousRevenue,
+        'prev_orders'     => $previousOrders,
+        'prev_customers'  => $previousCustomers,
+
+        // Additional metrics
+        'pos_revenue'     => $posVsOnline['pos'] ?? 0,
+        'online_revenue'  => $posVsOnline['online'] ?? 0,
+    ];
+}
     /**
      * Calculate growth percentage between two values
      */
@@ -447,10 +475,11 @@ class Report extends Model
     // ==================== STOCK REPORTS ====================
 
     /**
-     * Get stock valuation
-     */
-    public static function getStockValuation(): array
-    {
+ * Get stock valuation
+ */
+public static function getStockValuation(): array
+{
+    try {
         $products = Product::where('is_active', true)
             ->select(
                 DB::raw('COUNT(*) as total_products'),
@@ -460,11 +489,16 @@ class Report extends Model
             ->first();
 
         return [
-            'total_products' => $products->total_products ?? 0,
-            'total_units'    => $products->total_units ?? 0,
-            'total_value'    => $products->total_value ?? 0,
+            'total_products' => (int) ($products->total_products ?? 0),
+            'total_units'    => (int) ($products->total_units ?? 0),
+            'total_value'    => (float) ($products->total_value ?? 0),
         ];
+    } catch (\Exception $e) {
+        \Log::error('Error getting stock valuation: ' . $e->getMessage());
+        return ['total_products' => 0, 'total_units' => 0, 'total_value' => 0.0];
     }
+}
+
 
     /**
      * Get stock movement for a period (sold vs restocked)

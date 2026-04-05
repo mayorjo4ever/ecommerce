@@ -77,7 +77,8 @@
 @stack('custom-scripts')
     <!-- Make sure jQuery and Bootstrap are loaded -->
     @if(!isset($skipBootstrap))
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>-->
+    <script src="{{asset('admin/js/bootstrap.bundle.min.js')}}"></script>
     @endif
     
     @if( Session::get('page')=='pos')
