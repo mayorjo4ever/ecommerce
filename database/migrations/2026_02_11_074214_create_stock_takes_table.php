@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('stock_takes', function (Blueprint $table) {
             $table->id();
-            $table->string('reference')->unique();
+            $table->string('reference',191)->unique();
             $table->enum('type', ['weekly', 'monthly', 'yearly', 'custom']);
             $table->enum('status', ['draft', 'in_progress', 'completed'])->default('draft');
             $table->date('period_start');

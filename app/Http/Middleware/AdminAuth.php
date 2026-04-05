@@ -17,6 +17,7 @@ class AdminAuth
      */
      public function handle(Request $request, Closure $next): Response
     {
+        Auth::shouldUse('admin');
         // Check if user is authenticated as admin
         if (!Auth::guard('admin')->check()) {
             // If not authenticated and not already on login page, redirect to login

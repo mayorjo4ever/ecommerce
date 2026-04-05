@@ -136,16 +136,40 @@ function searchAndAddByQRCode(code) {
 }
 
 // Camera Scanner Functions
+let scanLocked = false; // Prevents duplicate scans while camera is still on the QR code
+
+function beepOnScan() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1200, ctx.currentTime);       // High pitch beep
+        gainNode.gain.setValueAtTime(1, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); // Fade out in 0.15s
+
+        oscillator.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + 0.15);
+    } catch(e) {
+        console.warn('Beep not supported:', e);
+    }
+}
+
 function startCameraScanner() {
     $('#camera-scanner').show();
     $('#camera-scanner-btn').hide();
-    
-    html5QrCode = new Html5Qrcode("qr-video");
-    
+    scanLocked = false;
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+
     Html5Qrcode.getCameras().then(cameras => {
         if (cameras && cameras.length) {
             const cameraId = cameras[0].id;
-            
+
             html5QrCode.start(
                 cameraId,
                 {
@@ -153,10 +177,17 @@ function startCameraScanner() {
                     qrbox: { width: 250, height: 250 }
                 },
                 (decodedText) => {
+                    if (scanLocked) return; // Ignore repeated scans of same code
+                    scanLocked = true;
+
+                    beepOnScan();
                     searchAndAddByQRCode(decodedText);
+
+                    // Unlock after 2 seconds — ready to scan next product
+                    setTimeout(() => { scanLocked = false; }, 2000);
                 },
                 (errorMessage) => {
-                    // Parse error, ignore
+                    // Scanning errors are normal, ignore
                 }
             ).catch(err => {
                 console.error('Error starting camera:', err);
@@ -174,6 +205,7 @@ function stopCameraScanner() {
         html5QrCode.stop().then(() => {
             $('#camera-scanner').hide();
             $('#camera-scanner-btn').show();
+            scanLocked = false;
         });
     }
 }
