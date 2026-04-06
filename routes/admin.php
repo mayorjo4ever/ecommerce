@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\StockTakeController;
 use Illuminate\Support\Facades\Route;
 
@@ -101,5 +102,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('stock-takes/{stockTake}/complete', [StockTakeController::class, 'complete'])->name('stock-takes.complete');
     Route::post('stock-takes/{stockTake}/items/{item}', [StockTakeController::class, 'updateItem'])->name('stock-takes.update-item');
     Route::get('stock-takes/{stockTake}/export', [StockTakeController::class, 'export'])->name('stock-takes.export');
+
+    // Stock Movements
+    Route::prefix('stock')->name('stock.')->group(function () {
+        Route::get('/report',            [StockController::class, 'report'])->name('report');
+        Route::get('/history/{product}', [StockController::class, 'history'])->name('history');
+        Route::get('/create/{product}',  [StockController::class, 'create'])->name('create');
+        Route::post('/store/{product}',  [StockController::class, 'store'])->name('store');
     });
+
+    }); // end middleware('admin')
+
 });

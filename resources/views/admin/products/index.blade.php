@@ -65,6 +65,15 @@
                                             <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-sm btn-info">
                                                 <i class="mdi mdi-pencil"></i>
                                             </a>
+                                            
+                                            <a href="{{ route('admin.stock.history', $product) }}"
+                                                class="btn btn-sm btn-outline-success"
+                                                data-toggle="tooltip" title="Manage Stock">
+                                                 <i class="mdi mdi-package-variant"></i>
+                                                 <span class="badge badge-pill badge-{{ $product->quantity > 5 ? 'success' : ($product->quantity > 0 ? 'warning' : 'danger') }}">
+                                                     {{ $product->quantity }}
+                                                 </span>
+                                             </a>
                                         </td>
                                     </tr>
                                 @empty
