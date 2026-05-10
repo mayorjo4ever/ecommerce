@@ -144,7 +144,11 @@ class POSController extends Controller
             'tax' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
-
+        
+          abort_if(auth('admin')->user()->cannot('collect partial payment'), 403,
+                'You are not authorized to collect partial payments.'
+            );
+          
         try {
             DB::beginTransaction();
 

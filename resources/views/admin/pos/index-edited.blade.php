@@ -49,11 +49,7 @@
             border-radius: 5px;
         }
         
-        #qr-reader {
-            border-radius: 5px;
-        }
-        #qr-reader video {
-            width: 100% !important;
+        #qr-video {
             border-radius: 5px;
         }
         .scanning-line {
@@ -148,7 +144,7 @@
 
                             <!-- Video element for camera scanning (hidden by default) -->
                             <div id="camera-scanner" style="display: none;" class="mt-3">
-                                <div id="qr-reader" style="width: 100%; max-width: 500px;"></div>
+                                <video id="qr-video" style="width: 100%; max-width: 500px; border: 2px solid #4e73df;"></video>
                                 <button type="button" class="btn btn-danger btn-block mt-2" onclick="stopCameraScanner()">
                                     <i class="mdi mdi-close"></i> Stop Camera
                                 </button>
@@ -289,6 +285,7 @@
                     </div>
                 </div>
 
+                @can('collect partial payment')
                 <div class="mt-2">
                     <div class="form-check">
                         <label class="form-check-label">
@@ -298,6 +295,7 @@
                         </label>
                     </div>
                 </div>
+                @endcan
 
                 <div class="mt-2" id="change-display" style="display: none;">
                     <div class="alert alert-success">

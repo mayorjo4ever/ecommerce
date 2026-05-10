@@ -133,4 +133,10 @@ class Product extends Model
         }
         return 0;
     }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(\App\Models\StockMovement::class);
+    }
+     
 }
