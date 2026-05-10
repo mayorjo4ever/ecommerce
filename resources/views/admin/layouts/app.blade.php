@@ -19,6 +19,12 @@
     @stack('styles')
     
     <link rel="shortcut icon" href="{{ asset('admin/images/favicon.png') }}" />
+
+    <style>
+    .sidebar .collapse:not(.show) {
+        display: none;
+    }
+</style>
 </head>
 <body>
     <div class="container-scroller">
@@ -68,16 +74,46 @@
 @stack('plugin-scripts')
 
 <!-- Custom js for this page -->
-<script src="{{ asset('admin/js/off-canvas.js') }}"></script>
-<script src="{{ asset('admin/js/hoverable-collapse.js') }}"></script>
-<script src="{{ asset('admin/js/template.js') }}"></script>
+<!-- <script src="{{ asset('admin/js/off-canvas.js') }}"></script> -->
+<!-- <script src="{{ asset('admin/js/hoverable-collapse.js') }}"></script> -->
+<!-- <script src="{{ asset('admin/js/template.js') }}"></script> -->
 <script src="{{ asset('admin/js/settings.js') }}"></script>
 <script src="{{ asset('admin/js/todolist.js') }}"></script>
+<script> 
+    $(document).ready(function () {
+
+        // Collapse all menus first
+        $('#sidebar .collapse').removeClass('show');
+
+        // Remove active states first
+        $('#sidebar .nav-item').removeClass('active');
+
+        // Find active submenu link
+        let activeLink = $('#sidebar .nav-link.active');
+
+        if (activeLink.length) {
+
+            // Add active to parent nav item
+            activeLink.closest('.nav-item').addClass('active');
+
+            // Expand only the parent collapse
+            activeLink.closest('.collapse').addClass('show');
+
+            // Activate parent menu item
+            activeLink.closest('.nav-item')
+                      .parents('.nav-item')
+                      .addClass('active');
+        }
+ 
+    });
+
+</script>
+
 
 @stack('custom-scripts')
     <!-- Make sure jQuery and Bootstrap are loaded -->
     @if(!isset($skipBootstrap))
-    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{asset('admin/js/bootstrap.bundle.min.js')}}"></script>
     @endif
     
