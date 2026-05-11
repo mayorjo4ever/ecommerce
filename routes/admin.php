@@ -39,6 +39,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('settings', function () { 
             return view('admin.settings'); 
         })->name('settings');
+
+        // ═══════════════════════════════════════════════════════════════
+        // 1.  ADD THIS ROUTE to admin.php  (inside the middleware group)
+        // ═══════════════════════════════════════════════════════════════
+
+        // Barcode duplicate-check (called by the JS in the product form)
+        Route::get('products/check-barcode', [ProductController::class, 'checkBarcode'])
+            ->name('products.check-barcode');
+
+        // NOTE: Place this BEFORE Route::resource('products', ...) so Laravel
+        // doesn't mistake "check-barcode" for a {product} wildcard.
+
         
         // Products
         Route::resource('products', ProductController::class);

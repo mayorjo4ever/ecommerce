@@ -139,6 +139,7 @@
         </li>
 
         {{-- Coupons --}}
+        @cannot('view coupons')
         <li class="nav-item {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}">
             <a class="nav-link {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}"
                href="{{ route('admin.coupons.index') }}">
@@ -146,9 +147,10 @@
                 <i class="icon-tag menu-icon"></i>
                 <span class="menu-title">Coupons</span>
             </a>
-        </li>
+        </li> @endcan
 
         {{-- Reviews --}}
+         @cannot('view reviews')
         <li class="nav-item {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
             <a class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}"
                href="{{ route('admin.reviews.index') }}">
@@ -156,7 +158,7 @@
                 <i class="icon-star menu-icon"></i>
                 <span class="menu-title">Reviews</span>
             </a>
-        </li>
+        </li>  @endcan
 
         {{-- Admin Management --}}
         @if(auth()->guard('admin')->user()->isSuperAdmin() || auth()->guard('admin')->user()->canManageAdmins())
@@ -234,6 +236,7 @@
         </li>
 
         {{-- Settings --}}
+         @cannot('view settings')
         <li class="nav-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
             <a class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}"
                href="{{ route('admin.settings') }}">
@@ -241,7 +244,7 @@
                 <i class="icon-cog menu-icon"></i>
                 <span class="menu-title">Settings</span>
             </a>
-        </li>
+        </li>@endcan
 
     </ul>
 </nav>

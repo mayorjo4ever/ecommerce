@@ -80,7 +80,7 @@
                                 <div class="mb-2">
                                     <strong class="text-capitalize">{{ $group }}:</strong><br>
                                     @foreach($permissions as $permission)
-                                        <span class="badge badge-light mr-1 mb-1">
+                                        <span class="badge badge-primary mr-1 mb-1">
                                             {{ $permission->name }}
                                         </span>
                                     @endforeach

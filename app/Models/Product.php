@@ -24,6 +24,7 @@ class Product extends Model
         'is_featured',
         'is_active',
         'qr_code',
+        'barcode',
     ];
 
     protected $casts = [

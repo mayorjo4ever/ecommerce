@@ -21,10 +21,10 @@
                     <div class="col-lg-4 mx-auto" style="border-radius: 10px">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div class="brand-logo text-center">
-                                <img src="{{ asset('admin/images/logo.svg') }}" alt="logo">
+                                <img src="{{ asset('admin/images/pos.png') }}" alt="logo">
                             </div>
-                            <h4 class="text-center">Admin Login</h4>
-                            <h6 class="font-weight-light text-center">Sign in to continue.</h6>
+                            <h3 class="text-center">Admin Login</h3>
+                            <h6 class="font-weight-light text-center text-sm"><small>Sign in to continue.</small></h6>
                             
                             @if ($errors->any())
                                 <div class="alert alert-danger">
@@ -42,10 +42,32 @@
                                     <input type="email" class="form-control form-control-lg" 
                                            name="email" placeholder="Email" value="{{ old('email') }}" required autofocus>
                                 </div>
-                                <div class="form-group">
-                                    <input type="password" class="form-control form-control-lg" 
-                                           name="password" placeholder="Password" required>
-                                </div>
+                                 <div class="form-group position-relative">
+
+                                        <input type="password"
+                                            class="form-control form-control-lg pr-5"
+                                            id="password"
+                                            name="password"
+                                            placeholder="Password"
+                                            required>
+
+                                        <span id="togglePassword"
+                                            style="
+                                                position: absolute;
+                                                top: 50%;
+                                                right: 20px;
+                                                transform: translateY(-50%);
+                                                cursor: pointer;
+                                                z-index: 10;
+                                                font-size: 18px;
+                                                color: #6c757d;
+                                            ">
+
+                                            👁️
+
+                                        </span>
+
+                                    </div>
                                 <div class="mt-3">
                                     <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn">
                                         SIGN IN
@@ -73,6 +95,29 @@
     <script src="{{ asset('admin/js/hoverable-collapse.js') }}"></script>
     <script src="{{ asset('admin/js/template.js') }}"></script>
     <script src="{{ asset('admin/js/settings.js') }}"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('togglePassword');
+
+        let visible = false;
+
+        togglePassword.addEventListener('click', function () {
+
+            visible = !visible;
+
+            passwordInput.type = visible ? 'text' : 'password';
+
+            togglePassword.innerHTML = visible
+                ? '🙈'
+                : '👁️';
+        });
+
+    });
+</script>
+
     <script src="{{ asset('admin/js/todolist.js') }}"></script>
 </body>
 
